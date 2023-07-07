@@ -1,0 +1,72 @@
+﻿services:
+  testproject:
+    image: testproject
+    build:
+      context: .
+      dockerfile: TestProject/Dockerfile
+    ports:
+      - "5106:5106"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5106
+    networks:
+      - all_network
+  
+  
+  
+  testprojectstore:
+    image: testprojectstore
+    build:
+      context: .
+      dockerfile: TestProjectStore/Dockerfile
+    ports:
+      - "5076:5076"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5076
+    networks:
+      - all_network
+    depends_on:
+      - rabbitmqcustom
+    
+    restart: always
+
+  postgres_custom:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=web@1234
+      - POSTGRES_DB=test_project
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - all_network
+      
+  rabbitmqcustom:
+    image: rabbitmq:3-management
+    hostname: rabbitmqcustom
+    labels:
+      NAME: rabbitmqcustom
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - all_network
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq/mnesia
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+
+volumes:
+  postgres-data:
+  rabbitmq:
+    driver: local
+networks:
+  all_network:
+    driver: bridge
